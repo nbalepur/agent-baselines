@@ -192,7 +192,7 @@ By default, any solver using InspectAI to call models (e.g., via `get_model().ge
 There are times where it may be infeasible to use the InspectAI model API or `AsyncOpenAI` directly, such as when using a third-party agent library that makes model calls internally, perhaps with a custom API client.  AstaBench provides a utility to allow manually logging model usage in these cases, which can be used as follows:
 
 ```python
-from astabench.solvers.model_util import record_model_usage_with_inspect
+from astabench.util.model import record_model_usage_with_inspect
 from inspect_ai.model import ModelUsage
 
 # Example, assuming you can obtain this information from your custom agent
@@ -213,11 +213,11 @@ TODO: Many of these things are primarily documented via their docstrings; consid
 
 Astabench provides a few building blocks that may be helpful in agent design:
 
-- The [`SandboxToolManager`](/astabench/solvers/sandbox_util/sandbox_tool_manager.py) provides a simple way to allow sandboxed Python code to call tools that are defined in the host process.  This is useful, for example, for an agent that performs all actions via code, such as the [smolagents solver](/astabench/solvers/smolagents/agent.py), but still needs to use the tools from `state.tools` to complete tasks.  See the class docstring for full usage information.
-- The [`SandboxJupyter`](/astabench/solvers/sandbox_util/sandbox_jupyter.py) provides a Jupyter-like environment for running code in the sandbox, which is useful for allowing the agent to maintain the state of variables between calls, dynamically choose to wait for long-running processes (or stop them), and allows tracking execution history.  See the class docstring for full usage information.
+- The [`SandboxToolManager`](/astabench/util/sandbox/sandbox_tool_manager.py) provides a simple way to allow sandboxed Python code to call tools that are defined in the host process.  This is useful, for example, for an agent that performs all actions via code, such as the [smolagents solver](/astabench/solvers/smolagents/agent.py), but still needs to use the tools from `state.tools` to complete tasks.  See the class docstring for full usage information.
+- The [`SandboxJupyter`](/astabench/util/sandbox/sandbox_jupyter.py) provides a Jupyter-like environment for running code in the sandbox, which is useful for allowing the agent to maintain the state of variables between calls, dynamically choose to wait for long-running processes (or stop them), and allows tracking execution history.  See the class docstring for full usage information.
 - [`ToolsetConfig`](/astabench/tools/__init__.py) for allowing standard tool configuration across agents.  For example, the ReAct and Smolagents agents use this to allow specifying tools to be enabled/disabled in a standard way (e.g. `-S with_report_editor=1`)
     - TODO: Should document this better in the tools README
-    - Related: A [`merge_tools_with_state`](/astabench/solvers/util/state.py) utility that helps resolve conflicts between tools specified via solver args and tools provided by a particular task
+    - Related: A [`merge_tools_with_state`](/astabench/util/state.py) utility that helps resolve conflicts between tools specified via solver args and tools provided by a particular task
 - A variety of tools that an agent can use; see [`astabench.tools`](/astabench/tools/README.md).  These include:
     - Utilities for allowing the agent to submit answers by calling a tool
     - Editor tools for reports and tables, which help the agent follow the SQA and ArxivDigestables formats, respectively.
@@ -249,7 +249,7 @@ Run `make test-expensive PYTEST_ARGS="-k 'KEYWORD_EXPRESSION'"` to filter on spe
 
 ## Custom sandboxes
 
-AstaBench includes a standard sandbox used across all tasks that require one.  It comes with a variety of dependencies necessary to support the tasks and AstaBench features such as stateful code execution and `SandboxToolManager`.  While we recommend using this sandbox as the standard execution method, it is possible to use a different / custom sandbox via the [Inspect custom sandbox doc](https://inspect.aisi.org.uk/extensions.html#sec-sandbox-environment-extensions), and as long as it includes all the same dependencies as the AstaBench [sandbox Dockerfile](/astabench/solvers/sandbox_util/Dockerfile) and supports the `read_file`/`write_file`/`exec` functions, we expect it will work for all tasks in the suite.  Note that for the `local` sandbox (or any sandboxing that does not separate process/network namespaces between sandboxes) it may be necessary run only a single sample at a time (`--max-samples 1`) to avoid port conflicts between server processes in the sandbox.
+AstaBench includes a standard sandbox used across all tasks that require one.  It comes with a variety of dependencies necessary to support the tasks and AstaBench features such as stateful code execution and `SandboxToolManager`.  While we recommend using this sandbox as the standard execution method, it is possible to use a different / custom sandbox via the [Inspect custom sandbox doc](https://inspect.aisi.org.uk/extensions.html#sec-sandbox-environment-extensions), and as long as it includes all the same dependencies as the AstaBench [sandbox Dockerfile](/astabench/util/sandbox/Dockerfile) and supports the `read_file`/`write_file`/`exec` functions, we expect it will work for all tasks in the suite.  Note that for the `local` sandbox (or any sandboxing that does not separate process/network namespaces between sandboxes) it may be necessary run only a single sample at a time (`--max-samples 1`) to avoid port conflicts between server processes in the sandbox.
 
 # Available Agents
 
