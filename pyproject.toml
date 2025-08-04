@@ -3,29 +3,12 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "astabench"
+name = "agent-baselines"
 version = "0.0.1"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "inspect_ai==0.3.114",
-    "agent-eval==0.1.24",
-    "openai>=1.78.0", # required by inspect
-    "pydantic>=2.11.4", # required by inspect
-    "litellm",
-    "datasets~=3.2.0",
-    "huggingface_hub",
-    "google-genai>=1.16.1",
-    "nltk",
-    "tabulate",
-    "click==8.1.8",
-    "nora_lib-impl~=1.1.0",
-    "mcp~=1.10",
-    "httpx~=0.28.1",
-    "h2~=4.2.0",
-    "pandas",
-     "inspect_evals[core_bench] @ git+https://github.com/UKGovernmentBEIS/inspect_evals.git@c2bec9ebee7a5995512bf5ff67a2e82afe4d12e1#egg=inspect_evals",
-    "anthropic>=0.52.0"
+    "astabench @ git+https://github.com/allenai/asta-bench.git@util-reorg",
 ]
 
 [project.optional-dependencies]

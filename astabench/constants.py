@@ -1,2 +1,0 @@
-ASTA_BENCH_DATASET_REPO = "allenai/asta-bench"
-ASTA_BENCH_DATASET_REVISION = "e0a5d51f16d3af2aa6dd51c53bdb292df3ee1803"
