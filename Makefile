@@ -9,13 +9,15 @@ DOCKER_SOCKET_PATH ?= $(if $(XDG_RUNTIME_DIR),$(XDG_RUNTIME_DIR)/docker.sock,/va
 
 ENV_ARGS :=
 
-# Docker target for running a shell
-TARGET := --target astabench-base
 # Name of solver to build Docker container for
 SOLVER :=
+# Docker image tag for the solver
+TARGET := --target astabench-base
+
 ifdef SOLVER
-  TARGET := --target $(SOLVER)
-  ASTABENCH_TAG := $(ASTABENCH_TAG)-$(SOLVER)
+	  TARGET := --target $(SOLVER)
+	  ASTABENCH_TAG := $(ASTABENCH_TAG)-$(SOLVER)
+	  ENV_ARGS += --env-file solvers/$(SOLVER)/env
 endif
 
 # Add each env var only if it's defined
@@ -31,9 +33,17 @@ ifdef HF_TOKEN
   ENV_ARGS += -e HF_TOKEN
 endif
 
+ifdef GITHUB_ACCESS_TOKEN
+  ENV_ARGS += -e GITHUB_ACCESS_TOKEN
+endif
+
 # Also support .env file if it exists
 ifneq ("$(wildcard .env)","")
   ENV_ARGS += --env-file .env
+  # Load GITHUB_ACCESS_TOKEN from .env if not already set
+  ifndef GITHUB_ACCESS_TOKEN
+    GITHUB_ACCESS_TOKEN := $(shell grep '^GITHUB_ACCESS_TOKEN=' .env 2>/dev/null | cut -d'=' -f2)
+  endif
 endif
 
 # -----------------------------------------------------------------------------
@@ -59,8 +69,18 @@ endif
 # -----------------------------------------------------------------------------
 # Build the Docker image (primary target)
 # -----------------------------------------------------------------------------
+# Build args for GitHub authentication
+BUILD_ARGS :=
+ifdef GITHUB_ACCESS_TOKEN
+	BUILD_ARGS := --build-arg GITHUB_ACCESS_TOKEN=$(GITHUB_ACCESS_TOKEN)
+endif
+
 build-image:
-	docker build $(BUILD_QUIET) $(TARGET) . --tag $(ASTABENCH_TAG) -f ./docker/Dockerfile
+	@if [ -z "$(GITHUB_ACCESS_TOKEN)" ]; then \
+		echo "Warning: GITHUB_ACCESS_TOKEN not set. This may cause issues with private GitHub repositories."; \
+		echo "To set it, export GITHUB_ACCESS_TOKEN=<your_token> or add it to .env file"; \
+	fi
+	docker build $(BUILD_QUIET) $(BUILD_ARGS) $(TARGET) . --tag $(ASTABENCH_TAG) -f ./docker/Dockerfile
 
 # -----------------------------------------------------------------------------
 # Interactive shell in container
