@@ -1,6 +1,6 @@
 # Asta Paper Finder
 
-Paper Finder is our paper-seeking agent, described in detail in the ASTA-Bench paper. It is intended to be run against the `paper_finder` and `paper_finder_litqa2` test/validation tasks.
+Paper Finder is our paper-seeking agent, described in detail in the [AstaBench paper](https://allenai.org/papers/astabench). It is intended to be run against the `paper_finder` and `paper_finder_litqa2` test/validation tasks.
 
 The implementation is in [https://github.com/allenai/asta-paper-finder](https://github.com/allenai/asta-paper-finder)
 
