@@ -39,6 +39,71 @@ from knowledge_storm.rm import (
     YouRM,
 )
 from knowledge_storm.utils import load_api_key
+import dspy
+from typing import Union, List
+
+from scholarqa.rag.retriever_base import FullTextRetriever
+class SemanticScholarSearch(dspy.Retrieve):
+    def __init__(
+        self,
+        k=3,
+        s2_api_key: str = '',
+    ):
+        """
+        Params:
+            min_char_count: Minimum character count for the article to be considered valid.
+            snippet_chunk_size: Maximum character count for each snippet.
+            webpage_helper_max_threads: Maximum number of threads to use for webpage helper.
+            mkt, language, **kwargs: Bing search API parameters.
+            - Reference: https://learn.microsoft.com/en-us/bing/search-apis/bing-web-search/reference/query-parameters
+        """
+        super().__init__(k=k)
+        #self.retriever = FullTextRetriever(n_retrieval=self.k, n_keyword_srch=self.k)
+        self.retriever = FullTextRetriever(n_retrieval=256, n_keyword_srch=20)
+        self.usage = 0
+
+    def get_usage_and_reset(self):
+        usage = self.usage
+        self.usage = 0
+
+        return {"SemanticScholarSearch": usage}
+
+    def forward(
+        self, query_or_queries: Union[str, List[str]], exclude_urls: List[str] = []
+    ):
+        """Search with Semantic Scholar for self.k top passages for query or queries
+
+        Args:
+            query_or_queries (Union[str, List[str]]): The query or queries to search for.
+            exclude_urls (List[str]): A list of urls to exclude from the search results.
+
+        Returns:
+            a list of Dicts, each dict has keys of 'description', 'snippets' (list of strings), 'title', 'url'
+        """
+        queries = (
+            [query_or_queries]
+            if isinstance(query_or_queries, str)
+            else query_or_queries
+        )
+        self.usage += len(queries)
+
+        collected_results = []
+
+        for query in queries:
+            try:
+                results = self.retriever.retrieve_passages(query)
+
+                for res in results:
+                    collected_results.append({
+                        "url": res['corpus_id'],
+                        'title': res['title'],
+                        'description': res['title'],
+                        'snippets': [res['text']],
+                    })
+            except Exception as e:
+                print("Error:", e)
+
+        return collected_results
 
 
 def main(args):
@@ -53,8 +118,8 @@ def main(args):
     ModelClass = OpenAIModel
     # If you are using Azure service, make sure the model name matches your own deployed model name.
     # The default name here is only used for demonstration and may not match your case.
-    gpt_35_model_name = "gpt-3.5-turbo"
-    gpt_4_model_name = "gpt-4o"
+    gpt_35_model_name = "gpt-5-mini-2025-08-07"
+    gpt_4_model_name = "gpt-5.2-2025-12-11"
 
     # STORM is a LM system so different components can be powered by different models.
     # For a good balance between cost and quality, you can choose a cheaper/faster model for conv_simulator_lm
@@ -96,6 +161,8 @@ def main(args):
                 bing_search_api=os.getenv("BING_SEARCH_API_KEY"),
                 k=engine_args.search_top_k,
             )
+        case "s2":
+            rm = SemanticScholarSearch(s2_api_key=os.getenv("S2_API_KEY"))
         case "you":
             rm = YouRM(ydc_api_key=os.getenv("YDC_API_KEY"), k=engine_args.search_top_k)
         case "brave":
@@ -167,6 +234,7 @@ if __name__ == "__main__":
         type=str,
         choices=[
             "bing",
+            "s2",
             "you",
             "brave",
             "serper",
@@ -176,6 +244,12 @@ if __name__ == "__main__":
             "azure_ai_search",
         ],
         help="The search engine API to use for retrieving information.",
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default="gpt-4o",
+        help="The model to use for language model operations.",
     )
     # stage of the pipeline
     parser.add_argument(

@@ -198,3 +198,6 @@ uv.lock
 
 # AI docs
 CLAUDE.md
+
+# Nishant's scripts for baseline testing
+scripts/

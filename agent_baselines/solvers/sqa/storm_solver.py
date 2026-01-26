@@ -76,16 +76,18 @@ def build_sqa_response(report, citations) -> SQAResponse:
 
 
 @solver
-def storm_solver(retrieval: str = "you") -> Solver:
+def storm_solver(retrieval: str = "you", model: str = "openai/gpt-4.1-nano") -> Solver:
     async def solve(state: TaskState, generate: Generate) -> TaskState:
         assert (
             sys.version_info.major == 3 and sys.version_info.minor == 11
         ), "Python 3.11 is required to run this solver. If running with `uv` include `--python 3.11` in your command."
         if retrieval == "you":
             assert os.getenv("YDC_API_KEY"), "YDC_API_KEY is not set"
+        elif retrieval == "s2":
+            assert os.getenv("S2_API_KEY"), "S2_API_KEY is not set"
         else:
             raise ValueError(
-                f"Unsupported retrieval method: {retrieval} (only 'you' is supported)"
+                f"Unsupported retrieval method: {retrieval} (only 'you' or 's2' are supported)"
             )
         out_dir = "storm/" + str(uuid4())
         os.makedirs(out_dir, exist_ok=True)
@@ -94,7 +96,9 @@ def storm_solver(retrieval: str = "you") -> Solver:
             "--output-dir",
             out_dir,
             "--retriever",
-            "you",
+            retrieval,
+            "--model",
+            model,
             "--do-research",
             "--do-generate-outline",
             "--do-generate-article",

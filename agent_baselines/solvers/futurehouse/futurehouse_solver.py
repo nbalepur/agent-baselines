@@ -183,3 +183,59 @@ def futurehouse_solver(
             fh_client.close()
 
     return solve
+
+
+
+@solver
+def futurehouse_solver_simple(
+    agent: str = "FALCON",
+    max_wait_time: int = 300,
+    polling_interval: int = 5,
+    extract_snippets: bool = True,
+) -> Solver:
+    """
+    Solver that routes queries through Future House agents.
+
+    Args:
+        agent: The agent to use. Available agents are defined in the JobNames enum.
+               Defaults to "FALCON".
+        max_wait_time: Maximum time to wait for task completion in seconds (default: 300).
+        polling_interval: How often to poll for task status in seconds (default: 5).
+    """
+
+    async def solve(state: TaskState, generate: Generate) -> TaskState:
+        try:
+            from edison_client import EdisonClient, JobNames
+        except ImportError as e:
+            logger.error(
+                'Error importing edison_client: "%s". '
+                "Make sure you have installed the futurehouse dependencies.",
+                e,
+            )
+            raise
+
+        # Use the input text from TaskState
+        question = (
+            state.metadata.get("initial_prompt")
+            if state.metadata and "initial_prompt" in state.metadata
+            else state.input_text
+        )
+        api_key = os.environ.get("FUTUREHOUSE_API_KEY") or os.environ.get("FH_API_KEY")
+
+        
+        client = EdisonClient(
+            api_key=api_key,
+        )
+
+        task_data = {
+            "name": JobNames.LITERATURE,
+            "query": question,
+        }
+
+        task_response = client.run_tasks_until_done(task_data)
+        content = task_response[0].answer
+        state.messages.append(ChatMessageAssistant(content=content))
+        state.output.completion = content
+        return state
+
+    return solve

@@ -11,7 +11,7 @@ if [ -z "$ASTA_TOOL_KEY" ]; then
     echo "Warning: ASTA_TOOL_KEY must be set"
 fi
 
-uv run inspect eval \
+uv run --extra futurehouse inspect eval \
 --solver agent_baselines/solvers/futurehouse/futurehouse_solver.py@futurehouse_solver \
 --model openai/gpt-4.1-nano \
 --limit 1 \

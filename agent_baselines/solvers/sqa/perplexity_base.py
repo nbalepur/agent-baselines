@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 from astabench.types.sqa import Citation, SQAResponse, SQASection
 from inspect_ai.model import ResponseSchema, get_model
 from inspect_ai.model._providers.perplexity import PerplexityAPI
-from inspect_ai.solver import Solver, chain, generate
+from inspect_ai.solver import Solver, chain, generate, use_tools
 from inspect_ai.solver import prompt_template as prompt_template_solver
 from inspect_ai.solver import solver
 from inspect_ai.solver import system_message as system_message_solver
@@ -91,12 +91,29 @@ def perplexity_solver(
         if search_before_date_filter is not None:
             extra_body["search_before_date_filter"] = search_before_date_filter
 
+    # Solver to clear tools from state - Perplexity handles search via API parameters,
+    # not through tool calls, so we need to remove any tools that the task may have added
+    @solver
+    def clear_tools() -> Solver:
+        async def solve(state, generate):
+            if state.tools:
+                logger.info(
+                    f"Clearing {len(state.tools)} tools from state (Perplexity handles search via API parameters)"
+                )
+                state.tools = []
+            return state
+
+        return solve
+
     chainlist = []
     if prompt_template is not None:
         # Override Sample.input user message
         chainlist.append(prompt_template_solver(prompt_template))
     if system_message is not None:
         chainlist.append(system_message_solver(system_message))
+
+    # Clear tools before generating - Perplexity API rejects tools other than web_search
+    chainlist.append(clear_tools())
 
     if response_schema and extra_body:
         generate_solver = generate(

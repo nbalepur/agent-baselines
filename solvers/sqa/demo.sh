@@ -14,8 +14,8 @@ if [ -z "${ASTA_TOOL_KEY:-}" ]; then
 fi
 
 
-uv run inspect eval \
+uv run --extra sqa inspect eval \
 --solver agent_baselines/solvers/sqa/sqa.py@sqa_solver \
 --limit 1 \
 $* \
-astabench/sqa_dev
+astabench/complex_sqa_dev
