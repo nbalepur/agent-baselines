@@ -110,6 +110,7 @@ ignore = [
 
 [tool.uv.sources]
 knowledge-storm = { git = "https://github.com/gituser768/storm", branch = "dh-fix-youcom" }
+astabench = { path = "../asta-bench" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
